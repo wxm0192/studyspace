@@ -1,0 +1,516 @@
+<?php
+ini_set("display_errors", "On");//打开错误提示
+ini_set("error_reporting",E_ALL);//显示所有错误
+
+//header( "Content-type:text/html;charset=utf-8" );
+define( 'DEBUG' , true );
+if( DEBUG )
+{
+error_reporting( E_ALL ^ E_NOTICE );
+ini_set( 'display_errors' , 'On' );
+}
+else
+{
+error_reporting( 0 );
+ini_set( 'display_errors' , 'Off' );
+}
+
+function get_lab_conf($lab_id_i)
+{
+$file_path = "./lab.conf";
+if(file_exists($file_path))
+{
+	printf("This is the inputed lab_id : %d <br> ", $lab_id_i);
+	$file_arr = file($file_path);
+	(int)$searched=0 ; 
+	for($i=0;$i<count($file_arr);$i++)
+	{
+		//逐行读取文件内容
+	//echo "file line :".$file_arr[$i]."<br />";
+	//echo "file line :".$file_arr[$i]."<br />";
+		list($lab_id, $image, $tag, $network, $start_ip, $session_limit, $time_limit) = explode(":", $file_arr[$i] );
+		//echo "<br />" ;
+		//echo "lab_id : ".$lab_id; 
+		if  ($lab_id == $lab_id_i ) 
+			{
+			//echo  "<br />" ;
+			//printf("Here is the returned values : %d  <br> " ,  $lab_id );
+		 	$searched=1 ;
+			return($file_arr[$i]) ;
+			}
+	}
+
+	if( $searched == 0 );
+	{
+			printf("The required lab configuration not found : %d <br> ", $lab_id_i );
+			return   -1 ;              
+	}
+
+
+}
+}
+ 
+function show_lab_conf($lab) 
+{ list($lab_id, $image, $tag, $network, $start_ip, $session_limit, $time_limit) = explode(":", $lab );
+        echo "<br />" ;
+        echo "lab_id : ".$lab_id;
+        echo "<br />" ;
+        echo "image:".$image;
+        echo "<br />" ;
+        echo "tag:".$tag;
+        echo "<br />" ;
+        echo "netowrk:".$network;
+        echo "<br />" ;
+        echo "start_ip:".$start_ip;
+        echo "<br />" ;
+        echo "session_limit:".$session_limit;
+        echo "<br />" ;
+        echo "time_limit:".$time_limit   ;
+        echo "<br />" ;
+}
+
+function get_current_session_id($lab_id_i) 
+{
+	$file_path="./s_counter.txt" ;
+ 	if(is_file( $file_path ))
+	{
+            	//取文件里面的值
+		$file_arr = file($file_path);
+		$searched = 0   ;
+		for($i=0;$i<count($file_arr);$i++)
+		{
+			//逐行读取文件内容
+			//echo "file line :".$file_arr[$i]."<br />";
+			//echo "file line :".$file_arr[$i]."<br />";
+			list($lab_id, $session_counter ) = explode(":", $file_arr[$i] );
+			if($lab_id == $lab_id_i ) 
+			{
+				$searched = 1   ;
+				return $session_counter ;
+			}
+		}
+
+		if( $searched == 0   )
+			{
+				printf("<br> The required lab session not found , lab_id is %d <br> " , $lab_id_i  );
+				return -1 ; 
+			}
+    	} 
+	else 
+	{
+
+        	printf( "<br> File %s doest not  exist ! <br> ", $file_path );
+    	}
+}
+
+function increase_session_counter($lab_id_i , $num )
+{
+	$file_path="./s_counter.txt" ;
+ 	if(is_file( $file_path ))
+	{
+            	//取文件里面的值
+		$file_arr = file($file_path);
+		$fp=fopen($file_path , 'w+' ) ;
+		$searched = 0   ;
+		for($i=0;$i<count($file_arr);$i++)
+		{
+			//逐行读取文件内容
+			echo "file line :".$file_arr[$i]."<br />";
+			list($lab_id, $session_counter ) = explode(":", $file_arr[$i] );
+			if($lab_id == $lab_id_i ) 
+			{
+				printf("<br> This the searched  string : %s ; lab_id : %d ; session_counter : %d <br> " , $file_arr[$i] , $lab_id, $session_counter);
+				$searched = 1  ;
+				$session_counter=(int)$session_counter  ;
+				$num=(int)$num  ;
+				$session_counter +=  $num    ;
+
+				$file_arr[$i]=$lab_id.":".$session_counter.PHP_EOL ;
+				break ;
+			}
+		}
+		
+		if( $searched == 0   )
+			{
+				printf("<br> The required lab not found , lab_id is %d <br> " , $lab_id_i  );
+				$file_arr[count($file_arr)]=$lab_id_i.":"."1".PHP_EOL ;
+				//return ; 
+			}
+		rewind($fp);
+		for($i=0;$i<count($file_arr);$i++)
+		{
+			//printf("<br> This the writing string : %s <br> " ,  $file_arr[$i] );
+			fwrite($fp,$file_arr[$i]);
+		}
+			//fwrite($fp,$file_arr[$i]);
+    	} 
+	else 
+	{
+
+        	printf( "<br> File %s doest not  exist ! <br> ", $file_path );
+    	}
+
+	fclose($fp ) ;
+}
+
+
+function decrease_session_counter( $lab_id_i ,  $num )
+{
+	$file_path="./s_counter.txt" ;
+ 	if(is_file( $file_path ))
+	{
+            	//取文件里面的值
+		$file_arr = file($file_path);
+		$fp=fopen($file_path , 'w+' ) ;
+		$searched = 0   ;
+		for($i=0;$i<count($file_arr);$i++)
+		{
+			//逐行读取文件内容
+			echo "file line :".$file_arr[$i]."<br />";
+			list($lab_id, $session_counter ) = explode(":", $file_arr[$i] );
+			if($lab_id == $lab_id_i ) 
+			{
+				printf("<br> This the searched  string : %s ; lab_id : %d ; session_counter : %d <br> " , $file_arr[$i] , $lab_id, $session_counter);
+				$searched = 1  ;
+				$session_counter=(int)$session_counter  ;
+				$num=(int)$num  ;
+				if( $session_counter > 0 ) 
+					$session_counter -=  $num    ;
+				else
+				{
+					printf("<br> Nobody start this lab : %s <br> " ,  $lab_id_i);
+				}
+
+				$file_arr[$i]=$lab_id.":".$session_counter.PHP_EOL ;
+				break ;
+			}
+		}
+		
+		if( $searched == 0   )
+			{
+				printf("<br> The required lab not found , lab_id is %d <br> " , $lab_id_i  );
+				//$file_arr[count($file_arr)]=$lab_id_i.":"."1".PHP_EOL ;
+				//return ; 
+			}
+		rewind($fp);
+		for($i=0;$i<count($file_arr);$i++)
+		{
+			//printf("<br> This the writing string : %s <br> " ,  $file_arr[$i] );
+			fwrite($fp,$file_arr[$i]);
+		}
+			//fwrite($fp,$file_arr[$i]);
+    	} 
+	else 
+	{
+
+        	printf( "<br> File %s doest not  exist ! <br> ", $file_path );
+    	}
+
+	fclose($fp ) ;
+}
+
+
+function form_command($lab_id_i , $operation_type  ) 
+	// With IP increase 
+{
+	$lab_conf=get_lab_conf($lab_id_i) ; 
+	show_lab_conf($lab_conf) ;
+	$current_session_id=get_current_session_id($lab_id_i); 
+	list($lab_id, $image, $tag, $network, $start_ip, $session_limit, $time_limit) = explode(":", $lab_conf);
+	list($a_s , $b_s , $c_s , $d_s) = explode(".",  $start_ip) ; 
+	$d_s=(int)$d_s;
+	$current_session_id=(int)$current_session_id ;
+	$session_limit=(int)$session_limit;
+	if($current_session_id >= $session_limit ) 
+		{
+		printf("<br> Reach the session limit , waiting someone to eixt . <br> Lab_id : %d    <br>Session_counter: %d  <br>",$lab_id , $current_session_id) ;
+		return("-1") ; 
+		}
+	else 
+		{
+		$d_s += $current_session_id  ; 
+		//$d_s -= 1  ; 
+		$ip_add="$a_s"."."."$b_s"."."."$c_s"."."."$d_s" ; 
+		$part2 = "/root/app/controller/docker-lab-start.sh  "." $operation_type "."  "."$image"."  "."$tag"."  "."$network"."  "."$ip_add"  ;
+		$part1 = " ssh root@172.20.0.1  "."\" ".$part2."\"" ;
+		echo "<br>This is the formed command: <br> " ; 
+		echo "<br> $part1 <br> " ; 
+		return($part1) ; 
+		}
+}
+
+function  form_ssh_command($lab_conf , $ip_addr ,  $operation_type  ) 
+//function form_ssh_command((string)$lab_conf , (string)$ip_addr ,  (string)$operation_type  ) 
+	// Without  IP increase  , simply form with lab_conf and IP_addr
+{
+	list($lab_id, $image, $tag, $network, $start_ip, $session_limit, $time_limit) = explode(":", $lab_conf);
+	$part2 = "/root/app/controller/docker-lab-start.sh  "." $operation_type "."  "."$image"."  "."$tag"."  "."$network"."  "."$ip_addr"  ;
+	$part1 = " ssh root@172.20.0.1  "."\" ".$part2."\"" ;
+	//echo "<br>This is the formed command: <br> " ; 
+	//echo "<br> $part1 <br> " ; 
+	return($part1) ; 
+}
+
+function get_session_ip($lab_id_i , $session_id_i  ) 
+//This function get the IP assigned for the session id : Session_ip = lab_start_ip + session_id 
+{
+	$lab_conf=get_lab_conf($lab_id_i) ; 
+	show_lab_conf($lab_conf) ;
+	list($lab_id, $image, $tag, $network, $start_ip, $session_limit, $time_limit) = explode(":", $lab_conf);
+	list($a_s , $b_s , $c_s , $d_s) = explode(".",  $start_ip) ; 
+	$d_s=(int)$d_s;
+	$session_id_i=(int)$session_id_i ;
+	$session_limit=(int)$session_limit;
+	if($session_id_i > $session_limit ) 
+		{
+		printf("<br> Reach the session limit , waiting someone to eixt . <br> Lab_id : %d    <br>Session_counter: %d  <br>",$lab_id , $current_session_id) ;
+		return("-1") ; 
+		}
+	else 
+		{
+		$d_s += $session_id_i  ; 
+		$d_s -= 1  ; 
+		$ip_add="$a_s"."."."$b_s"."."."$c_s"."."."$d_s" ; 
+		echo "<br>This is the session  IP :  ".$ip_add."<br>" ; 
+		return($ip_add) ; 
+		}
+}
+
+
+function get_current_session_ip_addr(int $lab_id_i  ,  int $session_id_i )
+//This function get the IP assigned for the session id from lab_session_ip.txt                    
+{
+        $file_path="./lab_session_ip.txt" ;
+        if(is_file( $file_path ))
+        {
+                //取文件里面的值
+                $file_arr = file($file_path);
+                $searched = 0   ;
+                for($i=0;$i<count($file_arr);$i++)
+                {
+                        //逐行读取文件内容
+                        //echo "file line :".$file_arr[$i]."<br />";
+                        //echo "file line :".$file_arr[$i]."<br />";
+                        list($lab_id, $session_id,$ip_addr ) = explode(":", $file_arr[$i] );
+                        if((int)$lab_id == $lab_id_i and (int)$session_id_i ==  $session_id )
+                        {
+                                $searched = 1   ;
+                                return $ip_addr ;
+                        }
+                }
+
+                if( $searched == 0   )
+                        {
+                                printf("<br> The required lab session not found , lab_id is %d <br> Session_id is %d <br> " , $lab_id_i, $session_id_i  );
+                                return -1 ;
+                        }
+        }
+        else
+        {
+
+                printf( "<br> File %s doest not  exist ! <br> ", $file_path );
+		return -1 ;
+        }
+}
+
+function add_session_ip(int $lab_id_i , int $session_id_i , $ip_i ) 
+{
+
+        $file_path="./lab_session_ip.txt" ;
+        if(is_file( $file_path ))
+        {
+                //取文件里面的值
+                $file_arr = file($file_path);
+		$fp=fopen($file_path , 'a+' ) ;
+                $searched = 0   ;
+                for($i=0;$i<count($file_arr);$i++)
+                {
+                        //逐行读取文件内容
+                        //echo "file line :".$file_arr[$i]."<br />";
+                        //echo "file line :".$file_arr[$i]."<br />";
+                        list($lab_id, $session_id,$ip_addr ) = explode(":", $file_arr[$i] );
+                        if($lab_id == $lab_id_i and $session_id_i ==  $session_id )
+                        {
+                                $searched = 1   ;
+                		/*
+				for($i=0;$i<count($file_arr);$i++)
+                		{
+                        		printf("<br> This the writing string : %s <br> " ,  $file_arr[$i] );
+                        		fwrite($fp,$file_arr[$i]);
+                		}
+				*/
+				fclose($fp ) ;
+                                return -1       ;
+                        }
+                }
+
+                if( $searched == 0   )
+                        {
+                                printf("<br> The required lab session added  , lab_id is %d <br> Session_id is %d <br> " , $lab_id_i, $session_id_i  );
+				$file_arr[$i]="$lab_id_i".":"."$session_id_i".":"."$ip_i".PHP_EOL;
+				//rewind($fp);
+
+                		/*for($i=0;$i<count($file_arr);$i++)
+                		{
+				*/
+                        		printf("<br> This the writing string : %s <br> " ,  $file_arr[$i] );
+                        		fwrite($fp,$file_arr[$i]);
+                		/*
+				}
+				*/
+				fclose($fp ) ;
+
+                                return 0  ;
+                        }
+        }
+        else
+        {
+
+                printf( "<br> File %s doest not  exist ! <br> ", $file_path );
+		return -1 ;
+        }
+}
+
+
+function del_session_ip(int $lab_id_i , int $session_id_i , $ip_i ) 
+{
+        //返回值： 1 ： 删除成功  0：未找到记录  -1： 文件不存在  
+        $file_path="./lab_session_ip.txt" ;
+        if(is_file( $file_path ))
+        {
+                //取文件里面的值
+                $file_arr = file($file_path);
+		$fp=fopen($file_path , 'w+' ) ;
+                $searched = 0   ;
+                for($i=0;$i<count($file_arr);$i++)
+                {
+                        //逐行读取文件内容
+                        //echo "file line :".$file_arr[$i]."<br />";
+                        //echo "file line :".$file_arr[$i]."<br />";
+                        list($lab_id, $session_id,$ip_addr ) = explode(":", $file_arr[$i] );
+                        if($lab_id == $lab_id_i and $session_id_i ==  $session_id and $ip_addr == $ip_i )
+                        //if($lab_id == $lab_id_i and $session_id_i ==  $session_id and strcmp($ip_addr ,  $ip_i) )
+                        {
+                                $searched = 1   ;
+                        	printf("<br> This is the deleting  string : %s <br> " ,  $file_arr[$i] );
+				$file_arr[$i] = PHP_EOL ;
+                        }
+                }
+
+                if( $searched == 0   )
+                        {
+                                printf("<br> The required lab session not found   , lab_id is %d <br> Session_id is %d <br> " , $lab_id_i, $session_id_i  );
+                                printf("<br> The required lab session not found   , IP is %s  <br> " , $ip_i  );
+                        }
+		rewind($fp);
+                for($i=0; $i<count($file_arr); $i++)
+                	{
+                       		//printf("<br> This the writing string : %s <br> " ,  $file_arr[$i] );
+				if( $file_arr[$i] != PHP_EOL )
+                       			fwrite($fp,$file_arr[$i]);
+			}
+
+		fclose($fp ) ;
+                return $searched  ;
+        }
+        else
+        {
+
+                printf( "<br> File %s doest not  exist ! <br> ", $file_path );
+		return -1 ;
+        }
+	 fclose($fp ) ;
+
+}
+
+
+function lab_start($mylab_id,$lab_session_id)
+{
+		
+	$lab_conf=get_lab_conf($mylab_id);
+	if( $lab_conf == -1 )
+	{
+		 printf("The required lab configuration not found : %d <br> ", $mylab_id );
+		 return -1 ; 
+	}
+			
+	//$session_id_i=$_GET['session-id'] ; 
+	if((int)$_SESSION['lab_session_id']<1 or empty($_SESSION['lab_session_id']) )
+        	{
+        		//$_SESSION['lab_session_id']=get_current_session_id( (int)$mylab_id);
+        		//$_SESSION['lab_session_id']=get_current_session_id( (int)$mylab_id);
+			$lab_session_id=get_current_session_id( (int)$mylab_id);
+			if((int )$lab_session_id == -1) 
+				{
+				 $lab_session_id=0 ;
+				}
+			$lab_session_id += 1 ;   //assign a new ID for this session 
+        		echo "Here is the lab session id assigned  :". $lab_session_id."<br>" ;
+			$_SESSION['lab_session_id']=$lab_session_id ;
+        		$_SESSION['lab_start_time']=time();
+
+			$lab_session_ip=get_session_ip($mylab_id , $lab_session_id  )  ; // form a new IP for this session 
+			echo "<br>"."this is the IP formed   for the lab & session :".$lab_session_ip."<br>" ;
+			increase_session_counter($mylab_id, 1);     // add the session counter 
+			add_session_ip( $mylab_id, $lab_session_id , $lab_session_ip ); // add the record to lab session ip table 
+			$operation_type="new";	
+			printf("<br> lab_conf :%s <br>", $lab_conf );
+			printf("<br>  lab_session_ip :%s <br>", $lab_session_ip);
+			printf("<br> operation_type :%s <br>", $operation_type );
+			$ssh_cmd=form_ssh_command($lab_conf , $lab_session_ip ,  $operation_type  ) ;
+			printf("<br> This is the formed command  :%s <br>", $ssh_cmd );
+			$s_out=passthru("$ssh_cmd"  ,$retval );
+			echo "<br>" ;
+			echo "system return:".$retval ;
+			echo "<br>" ;
+			echo "system out :".$s_out ;
+			echo "<br>This is a PHP test <br>" ;   
+			echo  "<br>".get_lab_conf($mylab_id)."<br>";
+			//echo get_current_session_ip_addr($mylab_id, $lab_session_id);
+
+			return $lab_session_ip ;
+        	}
+		else
+		{
+			echo "Here is the lab session id in else  :".$_SESSION['lab_session_id']."<br>" ;
+			$lab_session_id=$_SESSION['lab_session_id'] ;
+			printf("This is the inputed lab_id : %d <br> ", $mylab_id);
+			//printf("This is the session id : %d <br> ", $lab_session_id);
+
+			$current_session_ip_addr=get_current_session_ip_addr($mylab_id , $lab_session_id  ) ;
+			if($current_session_ip_addr == -1 )
+			{
+				printf("The IP for the lab & session not found : %d  , %d <br> ",  $mylab_id, $lab_session_id);
+				printf("This is a fatal Error , Check with system admin  <br> ");
+				return -1 ; 
+			}
+			else
+			{
+				printf("This is the IP got for the lab & session :%s<br> ", $current_session_ip_addr  ) ;
+				$lab_session_ip=$current_session_ip_addr ;
+				return $lab_session_ip ;
+			}
+
+		}
+}
+
+function lab_stop($mylab_id,$lab_session_ip)
+{
+        $lab_conf=get_lab_conf($mylab_id);
+        if( $lab_conf == -1 )
+        {
+                 printf("The required lab configuration not found : %d <br> ", $mylab_id );
+                 return -1 ;
+        }
+        //echo  "<br>".get_lab_conf($mylab_id)."<br>";
+	$operation_type = "del";
+ 	$ssh_cmd=form_ssh_command($lab_conf , $lab_session_ip ,  $operation_type  ) ;
+        printf("<br> This is the formed command  :%s <br>", $ssh_cmd );
+        $s_out=passthru("$ssh_cmd"  ,$retval );
+        //echo "<br>" ;
+        //echo "system return:".$retval ;
+        //echo "<br>" ;
+        //echo "system out :".$s_out ;
+        return $s_out ;            
+}
+?>
